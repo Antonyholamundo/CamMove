@@ -1,0 +1,270 @@
+/* =============================================================================
+   📁 ARCHIVO: src/App.css
+
+   RESPONSABILIDAD:
+     Todos los estilos visuales de la aplicación viven aquí. Está organizado
+     en secciones que corresponden a las capas de la UI:
+       1. Sistema de diseño (variables CSS / tokens)
+       2. Overlay de carga
+       3. Barra de cabecera (top-bar)
+       4. Escenario de cámara (camera-stage)
+       5. Overlay del GIF de gesto
+
+   SISTEMA DE VARIABLES (Custom Properties):
+     Al principio del archivo definimos los "tokens de diseño" en :root.
+     Usar variables CSS en vez de valores hardcodeados te permite cambiar
+     TODO el tema de la app modificando solo una línea.
+     Por ejemplo, para cambiar el color de acento a azul:
+       --accent: #3b82f6;
+     Y automáticamente el spinner, los landmarks, y los botones cambiarán.
+   ============================================================================= */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+/* Reset universal dentro del scope de este archivo */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* =============================================================================
+   🎨 SISTEMA DE DISEÑO: Variables CSS (Design Tokens)
+
+   🛠️ ZONA DE CUSTOMIZACIÓN #4: TEMA VISUAL
+   Aquí puedes cambiar toda la paleta de colores de un solo lugar.
+   ============================================================================= */
+:root {
+  --bg: #0d0d0f; /* Color de fondo principal (casi negro) */
+  --surface: #18181c; /* Superficies elevadas: cards, header */
+  --surface-2: #222228; /* Superficies doblemente elevadas: pill, tooltips */
+  --border: #2c2c34; /* Color de bordes y separadores */
+  --text: #e2e2e8; /* Texto principal (casi blanco) */
+  --text-muted: #bdbdc4; /* Texto secundario/apagado */
+  --accent: #7150f7; /* Color de acento principal (púrpura) — también se usa en landmarks */
+  --success: #29e76f; /* Verde para el indicador "Model ready" */
+  --danger: #ef4444; /* Rojo para el indicador "Loading" */
+  --header-h: 56px; /* Altura del header (usada en múltiples reglas) */
+
+  font-family: "Inter", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased; /* Suaviza el texto en pantallas de alta densidad */
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden; /* Evita scroll en el body (la app es full-screen) */
+  user-select: none; /* Evita que el usuario "seleccione" texto accidentalmente */
+}
+
+/* Contenedor raíz: ocupa toda la pantalla y organiza header + main en columna */
+#app-root {
+  position: fixed; /* Fijo respecto a la ventana, sin importar el scroll */
+  inset: 0; /* Equivale a: top:0; right:0; bottom:0; left:0; */
+  display: flex;
+  flex-direction: column;
+}
+
+/* =============================================================================
+   ⏳ CAPA: Overlay de Carga
+   Aparece sobre TODA la pantalla mientras el modelo de IA se descarga.
+   ============================================================================= */
+#loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200; /* Número alto para que aparezca por encima de todo lo demás */
+}
+
+#loading-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 48px 64px;
+}
+
+/* El spinner es un circle con un borde de color que rota con una animación CSS */
+#spinner {
+  width: 52px;
+  height: 52px;
+  border: 3px solid var(--border);
+  border-top-color: var(
+    --accent
+  ); /* Solo el borde superior tiene color → crea el efecto de arco */
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  } /* Rota 360° continuamente */
+}
+
+#loading-label {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+#loading-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* =============================================================================
+   📊 CAPA: Barra de Cabecera
+   ============================================================================= */
+#top-bar {
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Logo a la izquierda, status pill a la derecha */
+  padding: 0 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0; /* Evita que el header se encoja en pantallas pequeñas */
+  z-index: 10;
+}
+
+#app-logo {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+/* El "pill" es la cápsula que contiene el puntito de estado y el texto */
+#status-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+}
+
+/* El puntito indicador de estado */
+#status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Estado: modelo cargando → puntito ROJO parpadeando */
+#status-dot.loading {
+  background: var(--danger);
+  animation: pulse-dot 1s ease-in-out infinite;
+}
+
+/* Estado: modelo listo → puntito VERDE con brillo pulsante */
+#status-dot.ready {
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success); /* Halo verde */
+  animation: pulse-dot 2.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  } /* Baja la opacidad a la mitad → efecto de pulso */
+}
+
+#status-text {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.3px;
+}
+
+/* =============================================================================
+   📷 CAPA: Escenario de la Cámara (camera-stage)
+   El contenedor `relative` es fundamental: permite que los elementos
+   `absolute` (canvas, gif-overlay) se posicionen relativo a este contenedor
+   en vez de relativo a la ventana completa.
+   ============================================================================= */
+#camera-stage {
+  position: relative; /* ¡Indispensable! Establece el contexto de posicionamiento para hijos */
+  flex: 1; /* Ocupa todo el espacio restante debajo del header */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  overflow: hidden; /* Corta cualquier parte del video que sobresalga del contenedor */
+}
+
+/* CAPA 1: El video de la webcam ocupa todo el contenedor */
+#webcam-main {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Recorta el video para llenar el contenedor sin deformar */
+  transform: scaleX(
+    -1
+  ); /* Espejo horizontal → la imagen se ve como un espejo natural */
+  display: block;
+}
+
+/* CAPA 2: El canvas de landmarks, superpuesto pixel-perfect sobre el video */
+#landmark-canvas {
+  position: absolute; /* Sale del flujo normal y se posiciona sobre el video */
+  inset: 0; /* Se estira para cubrir todo el camera-stage */
+  width: 100%;
+  height: 100%;
+  transform: scaleX(
+    -1
+  ); /* Debe tener el mismo espejo que el video para que los puntos coincidan */
+  pointer-events: none; /* "Traspasa" los clics al video de abajo (el canvas es invisible para el mouse) */
+}
+
+/* =============================================================================
+   🎬 CAPA 3: Overlay del GIF de Gesto
+   Por defecto es invisible (opacity: 0). Cuando React le añade la clase
+   `.visible`, la transición CSS la hace aparecer suavemente en 0.25 segundos.
+   ============================================================================= */
+#gif-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0; /* Invisible por defecto */
+  pointer-events: none; /* Cuando está invisible, los clics pasan a través */
+  transition: opacity 0.25s ease; /* Animación suave de fade-in / fade-out */
+}
+
+/* Cuando App.jsx añade la clase `visible`, el overlay aparece con fade-in */
+#gif-overlay.visible {
+  opacity: 1;
+  pointer-events: auto; /* Al ser visible, puede recibir clics */
+}
+
+/* 🛠️ ZONA DE CUSTOMIZACIÓN #5: TAMAÑO Y ESTILO DEL GIF
+   Puedes cambiar el tamaño máximo del GIF modificando el primer valor de min().
+   Ejemplo para hacerlo más grande: width: min(480px, 70vw);
+   `border-radius` le da las esquinas redondeadas.
+   `box-shadow` añade la sombra profunda detrás del GIF. */
+#peace-gif {
+  width: min(
+    340px,
+    55vw
+  ); /* Responsive: máximo 340px en escritorio, 55% del ancho en móvil */
+  height: auto;
+  border-radius: 20px;
+  border: 2px solid var(--border);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
+}
